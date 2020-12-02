@@ -1,0 +1,8 @@
+CourseOS::vga_buffer::test_println_simple...        [ok]
+CourseOS::vga_buffer::test_println_many...          [ok]
+CourseOS::vga_buffer::test_lorem...                 [ok]
+CourseOS::vga_buffer::test_println_output...        [ok]
+CourseOS::interrupts::test_breakpoint_exception...  [ok]
+CourseOS::trivial_assertion...                      [ok]
+basic_boot::test_println...                         [ok]
+should_panic::should_fail...                        [ok]
