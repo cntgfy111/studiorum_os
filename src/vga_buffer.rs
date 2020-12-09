@@ -1,4 +1,4 @@
-// TODO: non-public _print
+// TODO: Cyrillic
 
 use volatile::Volatile;
 use core::fmt;
