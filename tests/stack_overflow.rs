@@ -2,12 +2,14 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
+use core::panic::PanicInfo;
+
 use lazy_static::lazy_static;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use core::panic::PanicInfo;
-use CourseOS::{serial_print, exit_qemu, serial_println, QemuExitCode};
 
-lazy_static!{
+use CourseOS::{exit_qemu, QemuExitCode, serial_print, serial_println};
+
+lazy_static! {
     static ref TEST_IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();
         unsafe {
@@ -26,7 +28,7 @@ pub fn init_test_idt() {
 
 extern "x86-interrupt" fn test_double_fault_handler(
     _stack_frame: &mut InterruptStackFrame,
-    _error_code: u64
+    _error_code: u64,
 ) -> ! {
     serial_println!("[ok]");
     exit_qemu(QemuExitCode::Success);

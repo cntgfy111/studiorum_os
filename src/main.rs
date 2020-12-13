@@ -7,31 +7,65 @@
 #![test_runner(CourseOS::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+extern crate alloc;
+
+use alloc::boxed::Box;
+use alloc::rc::Rc;
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
 use core::panic::PanicInfo;
-use CourseOS::println;
+
 use bootloader::{BootInfo, entry_point};
-use x86_64::structures::paging::PageTable;
+use x86_64::{
+    structures::paging::{MapperAllSizes, Page, PageTable},
+    VirtAddr,
+};
+
+use CourseOS::{
+    allocator,
+    memory::{self, BootInfoFrameAllocator},
+    println,
+};
 
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    use x86_64::{structures::paging::{MapperAllSizes, Page}, VirtAddr};
-    use CourseOS::memory;
-
     println!("Hello, World{}", "!");
     CourseOS::init();
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
-    let mut frame_allocator = memory::EmptyFrameAllocator;
+    let mut frame_allocator = unsafe { BootInfoFrameAllocator::init(&boot_info.memory_map) };
 
-    let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
-    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
-    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e) };
+    allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
+
+    let heap_value = Box::new(42);
+    println!("heap_value at {:p}", heap_value);
+
+    let mut vec = Vec::new();
+    for i in 0..500 {
+        vec.push(i);
+    }
+    println!("vec at {:p}", vec.as_ptr());
+
+    let reference_counted = Rc::new(vec![1, 2, 3]);
+    let cloned_reference = reference_counted.clone();
+    println!(
+        "current reference count is {}",
+        Rc::strong_count(&cloned_reference)
+    );
+    core::mem::drop(reference_counted);
+    println!(
+        "reference count is {} now",
+        Rc::strong_count(&cloned_reference)
+    );
 
     #[cfg(test)]
-    test_main();
+        test_main();
+
+    let pitsa = String::from("Ya hachu pitsi");
+    println!("{}", pitsa);
 
     println!("No crash!");
     CourseOS::hlt_loop();
@@ -54,4 +88,3 @@ fn panic(info: &PanicInfo) -> ! {
 fn trivial_assertion() {
     assert_eq!(1, 1);
 }
-

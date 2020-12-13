@@ -1,9 +1,10 @@
 // TODO: Cyrillic
 
-use volatile::Volatile;
 use core::fmt;
+
 use lazy_static::lazy_static;
 use spin::Mutex;
+use volatile::Volatile;
 
 #[macro_export]
 macro_rules! print {
@@ -21,8 +22,8 @@ pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     use x86_64::instructions::interrupts;
 
-    interrupts::without_interrupts( || {
-       WRITER.lock().write_fmt(args).unwrap();
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
     });
 }
 
@@ -73,7 +74,7 @@ const BUFFER_WIDTH: usize = 80;
 
 #[repr(transparent)]
 struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT]
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 pub struct Writer {
@@ -84,7 +85,7 @@ pub struct Writer {
 
 impl Writer {
     pub fn default() -> Self {
-        Writer{
+        Writer {
             columns_position: 0,
             color_code: ColorCode::new(Color::LightGreen, Color::Black),
             buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
@@ -95,7 +96,7 @@ impl Writer {
         for byte in s.bytes() {
             match byte {
                 0x20..=0x7e | b'\n' => self.write_byte(byte),
-                _ => self.write_byte(0xfe)
+                _ => self.write_byte(0xfe),
             }
         }
     }
