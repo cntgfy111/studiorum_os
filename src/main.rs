@@ -26,7 +26,9 @@ use CourseOS::{
     allocator,
     memory::{self, BootInfoFrameAllocator},
     println,
+    task::{keyboard, simple_executor::SimpleExecutor, Task},
 };
+use CourseOS::task::executor::Executor;
 
 entry_point!(kernel_main);
 
@@ -64,12 +66,24 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     #[cfg(test)]
         test_main();
 
-    let pitsa = String::from("Ya hachu pitsi");
-    println!("{}", pitsa);
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(example_task()));
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.run();
 
     println!("No crash!");
     CourseOS::hlt_loop();
 }
+
+async fn example_task() {
+    let number = async_number().await;
+    println!("async number: {}", number);
+}
+
+async fn async_number() -> u32 {
+    42
+}
+
 
 #[cfg(not(test))]
 #[panic_handler]
@@ -77,6 +91,7 @@ fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     CourseOS::hlt_loop();
 }
+
 
 #[cfg(test)]
 #[panic_handler]
