@@ -17,6 +17,8 @@ use core::panic::PanicInfo;
 #[cfg(test)]
 use bootloader::{BootInfo, entry_point};
 
+use vga_buffer::WRITER;
+
 #[cfg(test)]
 entry_point!(test_kernel_main);
 
@@ -27,6 +29,8 @@ pub mod memory;
 pub mod serial;
 pub mod vga_buffer;
 pub mod task;
+pub mod library;
+pub mod shell;
 
 pub fn init() {
     gdt::init();
@@ -35,8 +39,23 @@ pub fn init() {
     x86_64::instructions::interrupts::enable();
 }
 
+pub fn greeting() {
+    println!(r#"   _____ _             _ _                             ____   _____
+  / ____| |           | (_)                           / __ \ / ____|
+ | (___ | |_ _   _  __| |_  ___  _ __ _   _ _ __ ___ | |  | | (___
+  \___ \| __| | | |/ _` | |/ _ \| '__| | | | '_ ` _ \| |  | |\___ \
+  ____) | |_| |_| | (_| | | (_) | |  | |_| | | | | | | |__| |____) |
+ |_____/ \__|\__,_|\__,_|_|\___/|_|   \__,_|_| |_| |_|\____/|_____/"#)
+}
+
 pub fn hlt_loop() -> ! {
     loop {
+        x86_64::instructions::hlt();
+    }
+}
+
+pub fn wait() {
+    for _ in 1..20 {
         x86_64::instructions::hlt();
     }
 }

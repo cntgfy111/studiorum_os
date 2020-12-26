@@ -34,6 +34,11 @@ version = "0.3.4"
 default-features = false
 features = ["alloc"]
 
+[dependencies.hashbrown]
+version = "0.9.1"
+default-features = false
+features = ["alloc"]
+
 [package.metadata.bootimage]
 test-timeout = 20
 test-args = [
@@ -42,9 +47,9 @@ test-args = [
     "-display", "none",
 ]
 test-success-exit-code = 33
-#run-args = [
-#    "-s", "-S"
-#]
+run-args = [
+    #    "-serial", "stdio",
+]
 
 [[test]]
 name = "should_panic"

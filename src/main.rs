@@ -1,5 +1,6 @@
 // TODO: ASM printing for debug
 // TODO: Recursive Pages
+// TODO: warn! macro
 
 #![no_std]
 #![no_main]
@@ -22,19 +23,21 @@ use x86_64::{
     VirtAddr,
 };
 
-use CourseOS::{
-    allocator,
-    memory::{self, BootInfoFrameAllocator},
-    println,
-    task::{keyboard, simple_executor::SimpleExecutor, Task},
-};
+use CourseOS::{allocator, greeting, memory::{self, BootInfoFrameAllocator}, print, println, shell, task::{keyboard, simple_executor::SimpleExecutor, Task}, wait};
+use CourseOS::library::{random, time};
 use CourseOS::task::executor::Executor;
+use CourseOS::task::stdin;
+use CourseOS::vga_buffer::{color, Color, erase};
 
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
-    println!("Hello, World{}", "!");
+    println!("Hello, World!\nInitializing...");
     CourseOS::init();
+
+    wait();
+    println!("GDT, IDT and PICS are ready. Interrupts enabled.");
+
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
@@ -42,37 +45,20 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     allocator::init_heap(&mut mapper, &mut frame_allocator).expect("heap initialization failed");
 
-    let heap_value = Box::new(42);
-    println!("heap_value at {:p}", heap_value);
-
-    let mut vec = Vec::new();
-    for i in 0..500 {
-        vec.push(i);
-    }
-    println!("vec at {:p}", vec.as_ptr());
-
-    let reference_counted = Rc::new(vec![1, 2, 3]);
-    let cloned_reference = reference_counted.clone();
-    println!(
-        "current reference count is {}",
-        Rc::strong_count(&cloned_reference)
-    );
-    core::mem::drop(reference_counted);
-    println!(
-        "reference count is {} now",
-        Rc::strong_count(&cloned_reference)
-    );
+    wait();
+    println!("Virtual memory and heap are ready.");
 
     #[cfg(test)]
         test_main();
 
-    let mut executor = Executor::new();
-    executor.spawn(Task::new(example_task()));
-    executor.spawn(Task::new(keyboard::print_keypresses()));
-    executor.run();
+    wait();
+    println!("Initialization complete!");
+    greeting();
 
-    println!("No crash!");
-    CourseOS::hlt_loop();
+    let mut executor = Executor::new();
+    executor.spawn(Task::new(keyboard::print_keypresses()));
+    executor.spawn(Task::new(shell::lsh()));
+    executor.run();
 }
 
 async fn example_task() {
@@ -92,6 +78,14 @@ fn panic(info: &PanicInfo) -> ! {
     CourseOS::hlt_loop();
 }
 
+fn color_showcase() {
+    color(Color::Black, Color::LightGreen);
+    print!("Now colors are reversed!");
+    color(Color::Pink, Color::Yellow);
+    print!("And now it`s pink and yellow!");
+    color(Color::LightGreen, Color::Black);
+    println!();
+}
 
 #[cfg(test)]
 #[panic_handler]

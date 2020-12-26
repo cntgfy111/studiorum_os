@@ -3,6 +3,7 @@ use core::ptr::null_mut;
 
 use bootloader::bootinfo::MemoryRegionType::PageTable;
 use linked_list_allocator::LockedHeap;
+use spin::MutexGuard;
 use x86_64::{
     structures::paging::{
         FrameAllocator, Mapper, mapper::MapToError, Page, PageTableFlags, Size4KiB,
@@ -73,6 +74,8 @@ impl<A> Locked<A> {
     pub fn lock(&self) -> spin::MutexGuard<A> {
         self.inner.lock()
     }
+
+    pub fn try_lock(&self) -> Option<MutexGuard<A>> { self.inner.try_lock() }
 }
 
 pub struct Dummy;

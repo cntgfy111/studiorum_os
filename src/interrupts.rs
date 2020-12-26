@@ -1,6 +1,7 @@
 // TODO: Self-made exception handler: https://os.phil-opp.com/first-edition/extra/naked-exceptions/
 
 use core::ops::{Index, IndexMut};
+use core::sync::atomic::Ordering;
 
 use lazy_static::lazy_static;
 use pic8259_simple::ChainedPics;
@@ -11,6 +12,8 @@ use x86_64::structures::idt::{
 
 use crate::{gdt, print, println};
 use crate::hlt_loop;
+use crate::library::time::TIME;
+use crate::vga_buffer::erase;
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -95,7 +98,7 @@ extern "x86-interrupt" fn page_fault_handler(
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: &mut InterruptStackFrame) {
-    print!(".");
+    TIME.fetch_add(50, Ordering::SeqCst);
 
     unsafe {
         PICS.lock()

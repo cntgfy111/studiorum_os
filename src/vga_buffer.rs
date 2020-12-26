@@ -61,6 +61,10 @@ impl ColorCode {
     fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
+
+    fn default() -> ColorCode {
+        ColorCode::new(Color::LightGreen, Color::Black)
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -142,6 +146,39 @@ impl Writer {
             self.buffer.chars[row][col].write(blank);
         }
     }
+
+    pub fn backspace(&mut self) {
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code,
+        };
+        if self.columns_position > 0 {
+            self.columns_position -= 1;
+        }
+        self.buffer.chars[BUFFER_HEIGHT - 1][self.columns_position].write(blank);
+    }
+
+    pub fn erase_line(&mut self) {
+        let blank = ScreenChar {
+            ascii_character: b' ',
+            color_code: self.color_code,
+        };
+        for i in 0..self.columns_position {
+            self.buffer.chars[BUFFER_HEIGHT - 1][i].write(blank);
+        }
+    }
+}
+
+pub fn erase() {
+    WRITER.lock().backspace();
+}
+
+pub fn erase_line() {
+    WRITER.lock().erase_line();
+}
+
+pub fn color(foreground: Color, background: Color) {
+    WRITER.lock().color_code = ColorCode::new(foreground, background);
 }
 
 impl fmt::Write for Writer {
