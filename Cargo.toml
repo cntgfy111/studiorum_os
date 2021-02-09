@@ -36,8 +36,7 @@ features = ["alloc"]
 
 [dependencies.hashbrown]
 version = "0.9.1"
-default-features = false
-features = ["alloc"]
+
 
 [package.metadata.bootimage]
 test-timeout = 20

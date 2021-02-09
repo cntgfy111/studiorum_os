@@ -9,6 +9,7 @@
 #![feature(const_mut_refs)]
 #![feature(const_in_array_repeat_expressions)]
 #![feature(wake_trait)]
+#![feature(iterator_fold_self)]
 
 extern crate alloc;
 
